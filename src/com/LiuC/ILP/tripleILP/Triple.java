@@ -39,6 +39,6 @@ public class Triple {
     }
 
     public String toString(){
-        return this.id+"\t"+this.subject+"\t"+this.relation+"\t"+this.object;
+        return this.subject+"\t"+this.relation+"\t"+this.object;
     }
 }

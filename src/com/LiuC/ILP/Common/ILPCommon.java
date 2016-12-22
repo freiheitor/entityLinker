@@ -45,8 +45,7 @@ public class ILPCommon {
         return varExist;
     }
 
-    public static ArrayList<Integer> getSolution(GRBModel model, GRBVar[] men4entBinary,GRBVar[] menBinary,ArrayList<Integer> men4entStart,ArrayList<Integer> men4entNum) throws GRBException {
-        ArrayList<Integer> varExist=new ArrayList<>();
+    public static ArrayList<Integer> getSolution(GRBModel model, GRBVar[] men4entBinary,GRBVar[] menBinary,ArrayList<Integer> men4entStart,ArrayList<Integer> men4entNum,ArrayList<Integer> tripleResult) throws GRBException {
         if (model.get(GRB.IntAttr.Status) == GRB.Status.OPTIMAL) {
             System.out.println("\nCost: " + model.get(GRB.DoubleAttr.ObjVal));
 
@@ -55,7 +54,7 @@ public class ILPCommon {
                     int men4entIndex=men4entStart.get(i)+j;
                     if(men4entBinary[men4entIndex].get(GRB.DoubleAttr.X)*menBinary[i].get(GRB.DoubleAttr.X)!=0){
                         //System.out.println(triples.get(i).toString());
-                        varExist.add(men4entIndex);
+                        tripleResult.add(men4entIndex);
                     }
                 }
             }
@@ -64,7 +63,7 @@ public class ILPCommon {
         else {
             System.out.println("No solution");
         }
-        return varExist;
+        return tripleResult;
     }
 
     /**

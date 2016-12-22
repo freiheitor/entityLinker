@@ -13,7 +13,7 @@ public class ILPtriple {
 
     }
 
-    public static void calILPtriple(ILPTripStru ilpTripStru){
+    public static void calILPtriple(ILPTripStru ilpTripStru,ArrayList<Integer> tripleResult){
         try{
             ArrayList<Integer> men4entNum = ilpTripStru.getMen4entNum();//each mention to entity num:5,10,8,7
             ArrayList<Integer> men4entStart = ilpTripStru.getMen4entStart();;//each mention start index,0,5,15,23
@@ -67,17 +67,15 @@ public class ILPtriple {
             model.optimize();
 
             //solution
-            ArrayList<Integer> tripleResult=ilpCommon.getSolution(model,men4entBinary,menBinary,men4entStart,men4entNum);
-            for (int i=0;i<tripleResult.size();i++){
-                int tripleID=tripleResult.get(i);
-                System.out.println(triples.get(tripleID));
-            }
+            ilpCommon.getSolution(model,men4entBinary,menBinary,men4entStart,men4entNum,tripleResult);
+//            for (int i=0;i<tripleResult.size();i++){
+//                int tripleID=tripleResult.get(i);
+//                System.out.println(triples.get(tripleID));
+//            }
 
             // Dispose of model and environment
             model.dispose();
             env.dispose();
-
-
         }
         catch (GRBException e) {
             System.out.println("Error code: " + e.getErrorCode() + ". " +

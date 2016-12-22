@@ -1,48 +1,90 @@
 package com.LiuC.ILP.tripleILP;
 
 import com.LiuC.ILP.Common.StringControl;
+import com.LiuC.common.FileUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Freiheiter on 2016/12/19.
  */
 public class CalTripILPdata {
     public static void main(String[] args) {
-        CalTripILPdata calTripILPdata=new CalTripILPdata();
 
-        String fileIn="E:\\project\\entityLinking\\data\\triple\\triple_all.all_100000";
-        String question="孙悟空出生在哪？";
-//        question=args[1];
-//        fileIn=args[0];
+        String tripleFile="E:\\project\\entityLinking\\data\\triple\\triple_all.all_100000";
+        String qaFile="E:\\project\\entityLinking\\data\\triple\\cqa_triple_all.test";
+        String outFile="E:\\project\\entityLinking\\data\\triple\\cqa_result_";
+
+//        tripleFile=args[0];
+//        qaFile=args[1];
+//        outFile=args[2];
+
+        CalTripILPdata calTripILPdata=new CalTripILPdata();
+        calTripILPdata.tripleILPdata(tripleFile,qaFile,outFile);
+
+    }
+
+    public static void tripleILPdata(String tripleFile,String qaFile,String outFile){
+
+        CalTripILPdata calTripILPdata=new CalTripILPdata();
+        ArrayList<String> qa_triple_match=new ArrayList<>();
+        ArrayList<String> qa_triple_no_match=new ArrayList<>();
 
         ArrayList<Triple> triples=new ArrayList<>();
         HashMap<String,ArrayList<Integer>> mention4tripID=new HashMap<>();
         LoadData loadData = new LoadData();
-        loadData.loadTriple(fileIn,triples,mention4tripID);
+        loadData.loadTriple(tripleFile,triples,mention4tripID);
+
+        HashMap<String,String> QApair=new HashMap<>();
+        loadData.loadCqaTriple(qaFile,QApair);
 
 //        //statistic the mention length
 //        ArrayList<Double> menLengthStatic=new ArrayList<>();
 //        NumStatistics numStatistic=new NumStatistics();
 //        numStatistic.getMenLengthResult(mention4tripID,menLengthStatic);
 
-        ILPTripStru ilpTripStru=new ILPTripStru();
-        calTripILPdata.tripleILPdata(question,triples,mention4tripID,ilpTripStru);
-        System.out.println("ILP data prepared");
-        if (ilpTripStru.getMention_no_overlap().size()!=0){
-            System.out.println("ILP calculate starting");
-            ILPtriple ilPtriple=new ILPtriple();
-            ilPtriple.calILPtriple(ilpTripStru);
-            System.out.println("ILP calculate finished");
-        }
-        else{
-            System.out.println(question+" has no mention to match");
+        for(Map.Entry<String,String> entry:QApair.entrySet()){
+            String ques=entry.getKey();
+            String ans=entry.getValue();
+            ILPTripStru ilpTripStru=new ILPTripStru();
+            calTripILPdata.calSentILP(ques,ans,triples,mention4tripID,ilpTripStru);
+            calTripILPdata.calConflict(ilpTripStru);
+            //System.out.println("ILP data prepared");
+            StringBuffer sb=new StringBuffer();
+            sb.append("question:");
+            sb.append(ques);
+//            sb.append("\tanswer:");
+            sb.append(ans);
+            if (ilpTripStru.getMention_no_overlap().size()!=0){
+                StringBuffer qa_match_sb=sb;
+                qa_match_sb.append("\ttriple:");
+
+//                System.out.println("ILP calculate starting");
+                ILPtriple ilPtriple=new ILPtriple();
+                ArrayList<Integer> tripleResult=new ArrayList<>();
+                ilPtriple.calILPtriple(ilpTripStru,tripleResult);
+                System.out.println("ILP calculate finished");
+                if (tripleResult.size()!=0){
+                    ArrayList<Triple> triple_ = ilpTripStru.getTriples();
+                    for (int i=0;i<tripleResult.size();i++){
+                        qa_match_sb.append(triple_.get(tripleResult.get(i)).toString());
+                        qa_match_sb.append("\t");
+                    }
+                }
+                qa_triple_match.add(qa_match_sb.toString());
+            }
+            else{
+                qa_triple_no_match.add(sb.toString());
+            }
         }
 
-
+        FileUtil fileUtil=new FileUtil();
+        System.out.println("Total QA triple: "+QApair.size()+" match QA triple in KB: "+qa_triple_match.size()+" no match QA triple in KB:"+qa_triple_no_match.size());
+        fileUtil.writeLines(outFile+"match_triple",qa_triple_match);
+        fileUtil.writeLines(outFile+"no_match_triple",qa_triple_no_match);
     }
-
 
     /**
      * calculate ILP date including ILP data structure and conflict
@@ -51,9 +93,9 @@ public class CalTripILPdata {
      * @param mention4tripID
      * @param ilpTripStru
      */
-    public static void tripleILPdata(String question,ArrayList<Triple> triples, HashMap<String,ArrayList<Integer>> mention4tripID,ILPTripStru ilpTripStru){
+    public static void tripleILPdata(String question,String answer,ArrayList<Triple> triples, HashMap<String,ArrayList<Integer>> mention4tripID,ILPTripStru ilpTripStru){
         CalTripILPdata calTripILPdata=new CalTripILPdata();
-        calTripILPdata.calSentILP(question,triples,mention4tripID,ilpTripStru);
+        calTripILPdata.calSentILP(question,answer,triples,mention4tripID,ilpTripStru);
         calTripILPdata.calConflict(ilpTripStru);
 
     }
@@ -65,7 +107,7 @@ public class CalTripILPdata {
      * @param mention4tripID
      * @param ilpTripStru
      */
-    public static void calSentILP(String quesiton, ArrayList<Triple> allTriples, HashMap<String,ArrayList<Integer>> mention4tripID,ILPTripStru ilpTripStru){
+    public static void calSentILP(String quesiton, String answer,ArrayList<Triple> allTriples, HashMap<String,ArrayList<Integer>> mention4tripID,ILPTripStru ilpTripStru){
         ArrayList<ArrayList<String>> allsubStr = new ArrayList<>();
         StringControl stringControl=new StringControl();
         StringControl.getAllsubStr(quesiton,allsubStr);// each array is locations which the location of starting is same
@@ -77,21 +119,25 @@ public class CalTripILPdata {
                 String mention=subStrlist.get(j);
                 if (mention4tripID.containsKey(mention)){
                     ArrayList<Integer> tripleIDlist=mention4tripID.get(mention);
-                    ilpTripStru.addMen4entNum(tripleIDlist.size());
-                    ilpTripStru.addMen4entStart(Men4entStart);
-                    Men4entStart+=tripleIDlist.size();
-
-                    ilpTripStru.addMention_starInStr(i);
-                    ilpTripStru.addMention_no_overlap(mention);
-
-                    ilpTripStru.addMention_LengthWei(mention.length()*0.1+0.5);
-
+                    int menEntSize=0;
                     for(int k=0;k<tripleIDlist.size();k++){
                         int tripleID=tripleIDlist.get(k);
-                        ilpTripStru.addMen4entID(tripleID);
-                        ilpTripStru.addTriples(allTriples.get(tripleID));
+                        Triple triple=allTriples.get(tripleID);
+                        if(answer.contains(triple.getObject())){
+                            ilpTripStru.addMen4entID(tripleID);
+                            ilpTripStru.addTriples(allTriples.get(tripleID));
+                            menEntSize++;
+                        }
                     }
+                    if (menEntSize!=0){
+                        ilpTripStru.addMen4entNum(menEntSize);
+                        ilpTripStru.addMen4entStart(Men4entStart);
+                        Men4entStart+=menEntSize;
 
+                        ilpTripStru.addMention_starInStr(i);
+                        ilpTripStru.addMention_no_overlap(mention);
+                        ilpTripStru.addMention_LengthWei(mention.length()*0.1+0.5);
+                    }
                 }
             }
         }
@@ -158,7 +204,5 @@ public class CalTripILPdata {
                 }
             }
         }
-
     }
-
 }
