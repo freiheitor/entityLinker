@@ -1,8 +1,12 @@
 package com.LiuC.ILP.tripleILP;
 
 import com.LiuC.ILP.Common.StringControl;
+import com.LiuC.common.NumStatistics;
 import com.LiuC.common.FileUtil;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,22 +15,37 @@ import java.util.Map;
  * Created by Freiheiter on 2016/12/19.
  */
 public class CalTripILPdata {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException{
 
         String tripleFile="E:\\project\\entityLinking\\data\\triple\\triple_all.all_100000";
         String qaFile="E:\\project\\entityLinking\\data\\triple\\cqa_triple_all.test";
-        String outFile="E:\\project\\entityLinking\\data\\triple\\cqa_result_";
+        String outFile="E:\\project\\entityLinking\\data\\triple\\cqa_result_no_combine_";
+        String type="c";  //c:combine   //n:no combine
 
-//        tripleFile=args[0];
-//        qaFile=args[1];
-//        outFile=args[2];
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        System.out.println("please input \"c\"(combine question) or \"n\"(no combine question)");
+        type=br.readLine();
+        if(!type.equalsIgnoreCase("c")&&!type.equalsIgnoreCase("n")){
+            System.out.println("input error, exit!");
+        }
+
+        tripleFile=args[0];
+        qaFile=args[1];
+        outFile=args[2];
 
         CalTripILPdata calTripILPdata=new CalTripILPdata();
-        calTripILPdata.tripleILPdata(tripleFile,qaFile,outFile);
+        calTripILPdata.tripleILPdata(tripleFile,qaFile,outFile,type);
 
     }
 
-    public static void tripleILPdata(String tripleFile,String qaFile,String outFile){
+    /**
+     * load file and calculate ILP
+     * @param tripleFile
+     * @param qaFile
+     * @param outFile
+     * @param type
+     */
+    public static void tripleILPdata(String tripleFile,String qaFile,String outFile,String type){
 
         CalTripILPdata calTripILPdata=new CalTripILPdata();
         ArrayList<String> qa_triple_match=new ArrayList<>();
@@ -37,53 +56,145 @@ public class CalTripILPdata {
         LoadData loadData = new LoadData();
         loadData.loadTriple(tripleFile,triples,mention4tripID);
 
-        HashMap<String,String> QApair=new HashMap<>();
+        HashMap<String,ArrayList<String>> QApair=new HashMap<>();
         loadData.loadCqaTriple(qaFile,QApair);
 
-//        //statistic the mention length
-//        ArrayList<Double> menLengthStatic=new ArrayList<>();
-//        NumStatistics numStatistic=new NumStatistics();
-//        numStatistic.getMenLengthResult(mention4tripID,menLengthStatic);
+        //statistic the mention length
+        ArrayList<Double> menLengthStatic=new ArrayList<>();
+        NumStatistics numStatistic=new NumStatistics();
+        numStatistic.getMenLengthResult(mention4tripID,menLengthStatic);
 
-        for(Map.Entry<String,String> entry:QApair.entrySet()){
+        String questionTotalNum="questionTotalNum";
+        String ansOneTriple="ansOneTriple";
+        String ansOneMoreTriples="ansOneMoreTriples";
+        String noAnsTriple="noAnsTriple";
+        HashMap<String,Integer> statisNum=new HashMap<>();
+        int initNum=0;
+        statisNum.put(questionTotalNum,initNum);
+        statisNum.put(ansOneTriple,initNum);
+        statisNum.put(ansOneMoreTriples,initNum);
+        statisNum.put(noAnsTriple,initNum);
+
+
+        for(Map.Entry<String,ArrayList<String>> entry:QApair.entrySet()){
             String ques=entry.getKey();
-            String ans=entry.getValue();
-            ILPTripStru ilpTripStru=new ILPTripStru();
-            calTripILPdata.calSentILP(ques,ans,triples,mention4tripID,ilpTripStru);
-            calTripILPdata.calConflict(ilpTripStru);
-            //System.out.println("ILP data prepared");
-            StringBuffer sb=new StringBuffer();
-            sb.append("question:");
-            sb.append(ques);
-//            sb.append("\tanswer:");
-            sb.append(ans);
-            if (ilpTripStru.getMention_no_overlap().size()!=0){
-                StringBuffer qa_match_sb=sb;
-                qa_match_sb.append("\ttriple:");
+            ArrayList<String> ansList=entry.getValue();
+            if(type.equalsIgnoreCase("c")){
+                StringBuffer ans_ILP=new StringBuffer();
+                StringBuffer ans_write=new StringBuffer();
+                for(int i=0;i<ansList.size();i++){
+                    if (i!=0){
+                        ans_ILP.append("\t");
+                    }
+                    ans_ILP.append(ansList.get(i));
 
-//                System.out.println("ILP calculate starting");
-                ILPtriple ilPtriple=new ILPtriple();
+                    ans_write.append("\t");
+                    ans_write.append("answer");
+                    ans_write.append(i);
+                    ans_write.append(":");
+                    ans_write.append(ansList.get(i));
+                }
                 ArrayList<Integer> tripleResult=new ArrayList<>();
-                ilPtriple.calILPtriple(ilpTripStru,tripleResult);
-                System.out.println("ILP calculate finished");
-                if (tripleResult.size()!=0){
-                    ArrayList<Triple> triple_ = ilpTripStru.getTriples();
-                    for (int i=0;i<tripleResult.size();i++){
-                        qa_match_sb.append(triple_.get(tripleResult.get(i)).toString());
-                        qa_match_sb.append("\t");
+                String answer_triple=calTripILPdata.ILPmodel(ques,ans_ILP.toString().toString(),mention4tripID,triples,tripleResult);
+
+                statisNum.put(questionTotalNum,statisNum.get(questionTotalNum)+1);
+
+                if (!answer_triple.equals("")&&answer_triple!=null){
+                    calTripILPdata.ansTripleNum(tripleResult,statisNum,ansOneTriple,ansOneMoreTriples);
+                    StringBuffer all_buffer=new StringBuffer();
+                    all_buffer.append("question:");
+                    all_buffer.append(ques);
+                    all_buffer.append(ans_write);
+                    all_buffer.append(answer_triple);
+                    qa_triple_match.add(all_buffer.toString());
+                }
+                else {
+                    statisNum.put(noAnsTriple,statisNum.get(noAnsTriple)+1);
+                    qa_triple_no_match.add("question:"+ques+ans_write.toString());
+                }
+            }
+            else if(type.equalsIgnoreCase("n")){
+                for(int i=0;i<ansList.size();i++){
+                    String ans_origin=ansList.get(i);
+                    ArrayList<Integer> tripleResult=new ArrayList<>();
+                    String answer_triple=calTripILPdata.ILPmodel(ques,ans_origin,mention4tripID,triples,tripleResult);
+                    statisNum.put(questionTotalNum,statisNum.get(questionTotalNum)+1);
+                    if (!answer_triple.equals("")&&answer_triple!=null){
+                        calTripILPdata.ansTripleNum(tripleResult,statisNum,ansOneTriple,ansOneMoreTriples);
+
+                        StringBuffer all_buffer=new StringBuffer();
+                        all_buffer.append("question:");
+                        all_buffer.append(ques);
+                        all_buffer.append("\tanswer:");
+                        all_buffer.append(ans_origin);
+                        all_buffer.append(answer_triple);
+                        qa_triple_match.add(all_buffer.toString());
+                    }
+                    else {
+                        statisNum.put(noAnsTriple,statisNum.get(noAnsTriple)+1);
+                        qa_triple_no_match.add("question:"+ques+"\tanswer:"+ans_origin);
                     }
                 }
-                qa_triple_match.add(qa_match_sb.toString());
-            }
-            else{
-                qa_triple_no_match.add(sb.toString());
             }
         }
 
         FileUtil fileUtil=new FileUtil();
-        System.out.println("Total QA triple: "+QApair.size()+" match QA triple in KB: "+qa_triple_match.size()+" no match QA triple in KB:"+qa_triple_no_match.size());
-        fileUtil.writeLines(outFile+"match_triple",qa_triple_match);
-        fileUtil.writeLines(outFile+"no_match_triple",qa_triple_no_match);
+        String statisticNum="total question:"+statisNum.get(questionTotalNum)+"\tmore than one triple matched:"+statisNum.get(ansOneMoreTriples)+"\tone triple matched:"+statisNum.get(ansOneTriple)+"\tno triple matched:"+statisNum.get(noAnsTriple);
+        System.out.println(statisticNum);
+        fileUtil.writeLines(outFile+"match_triple",statisticNum);
+        fileUtil.writeLinesAppend(outFile+"match_triple",qa_triple_match);
+        fileUtil.writeLines(outFile+"no_match_triple",statisticNum);
+        fileUtil.writeLinesAppend(outFile+"no_match_triple",qa_triple_no_match);
+    }
+
+    /**
+     * static the number of one or more matched triple
+     * @param tripleResultInteger
+     * @param ansOneTriple
+     * @param ansOneMoreTriples
+     */
+    public static void ansTripleNum(ArrayList<Integer> tripleResultInteger,HashMap<String,Integer> statisNum,String ansOneTriple,String ansOneMoreTriples){
+        if (tripleResultInteger.size()==1){
+            statisNum.put(ansOneTriple,statisNum.get(ansOneTriple)+1);
+        }
+        else if (tripleResultInteger.size()>1){
+            statisNum.put(ansOneMoreTriples,statisNum.get(ansOneMoreTriples)+1);
+        }
+    }
+
+    /**
+     * deal with different model(combine the same question or not)
+     * @param ques
+     * @param ans
+     * @param mention4tripID
+     * @param triples
+     * @return
+     */
+    public static String ILPmodel(String ques,String ans,HashMap<String,ArrayList<Integer>> mention4tripID,ArrayList<Triple> triples,ArrayList<Integer> tripleResult){
+        ILPTripStru ilpTripStru=new ILPTripStru();
+        CalTripILPdata calTripILPdata=new CalTripILPdata();
+        calTripILPdata.calSentILP(ques,ans,triples,mention4tripID,ilpTripStru);
+        calTripILPdata.calConflict(ilpTripStru);
+        //System.out.println("ILP data prepared");
+        StringBuffer sb_return=new StringBuffer();
+
+        if (ilpTripStru.getMention_no_overlap().size()!=0){
+//                System.out.println("ILP calculate starting");
+            ILPtriple ilPtriple=new ILPtriple();
+            //tripleResult = new ArrayList<>();
+            ilPtriple.calILPtriple(ilpTripStru,tripleResult);
+//            System.out.println("ILP calculate finished");
+            if (tripleResult.size()!=0){
+                ArrayList<Triple> triple_ = ilpTripStru.getTriples();
+                for (int i=0;i<tripleResult.size();i++){
+                    sb_return.append("\ttriple");
+                    sb_return.append(i);
+                    sb_return.append(":");
+                    sb_return.append(triple_.get(tripleResult.get(i)).toString());
+                }
+            }
+        }
+        return sb_return.toString();
     }
 
     /**
@@ -111,7 +222,7 @@ public class CalTripILPdata {
         ArrayList<ArrayList<String>> allsubStr = new ArrayList<>();
         StringControl stringControl=new StringControl();
         StringControl.getAllsubStr(quesiton,allsubStr);// each array is locations which the location of starting is same
-        //int men4entstarInStrIndex=0;
+        //int men4entstarInStrIndex = 0;
         int Men4entStart=0;
         for(int i=0;i<allsubStr.size();i++){
             ArrayList<String> subStrlist=allsubStr.get(i);// each array is locations which the location of starting is same

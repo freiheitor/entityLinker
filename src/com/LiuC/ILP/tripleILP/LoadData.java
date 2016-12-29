@@ -14,10 +14,10 @@ public class LoadData {
         ArrayList<Triple> triples=new ArrayList<>();
         HashMap<String,ArrayList<Integer>> subject4tripID=new HashMap<>();
         LoadData loadData = new LoadData();
-        loadData.loadTriple(tripleFile,triples,subject4tripID);
+//        loadData.loadTriple(tripleFile,triples,subject4tripID);
 
-        String QAtriple="E:\\project\\entityLinking\\data\\triple\\cqa_triple_all.all";
-        HashMap<String, String> QApair=new HashMap<>();
+        String QAtriple="E:\\project\\entityLinking\\data\\triple\\cqa_triple_all.test";
+        HashMap<String, ArrayList<String>> QApair=new HashMap<>();
         loadData.loadCqaTriple(QAtriple,QApair);
         System.out.println("finished!");
     }
@@ -62,25 +62,30 @@ public class LoadData {
         System.out.println("load triple finished!");
     }
 
-    public static void loadCqaTriple(String input, HashMap<String, String> quesAns){
+    /**
+     * load aqa_triple, return the map<qeustion,List<answer>>
+     * @param input
+     * @param quesAns
+     */
+    public static void loadCqaTriple(String input, HashMap<String, ArrayList<String>> quesAns){
         System.out.println("load cqa_triple starts:");
         FileUtil fileUtil=new FileUtil();
         ArrayList<String> lineList=new ArrayList<>();
         fileUtil.readLines(input,lineList);
         for (int i=0;i<lineList.size();i++){
             try{
+                if (lineList.get(i).isEmpty()){
+                    continue;
+                }
                 String [] lines=lineList.get(i).split("\t");
                 String question=lines[0];
                 String answer=lines[1];
+                ArrayList<String> ansList=new ArrayList<>();
                 if(quesAns.containsKey(question)){
-                    String answer_before=quesAns.get(question);
-                    String[] answer_array=answer_before.split("\t");
-                    quesAns.put(question,quesAns.get(question)+"\tanswer"+answer_array.length+":"+answer);
+                    ansList=quesAns.get(question);
                 }
-                else {
-                    quesAns.put(question,"\tanswer0:"+answer);
-                }
-
+                ansList.add(answer);
+                quesAns.put(question,ansList);
             }
             catch (IndexOutOfBoundsException e){
                 e.printStackTrace();
