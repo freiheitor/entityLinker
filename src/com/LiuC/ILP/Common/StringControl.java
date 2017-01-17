@@ -11,9 +11,9 @@ public class StringControl {
 
     public static void main(String[] args) {
 
-        System.out.println(getOverlapString("opo","opo"));
+        System.out.println(getOverlapString("好妈妈","你妈妈"));
 
-//        System.out.println(getOverlapString("好妈妈","妈妈"));
+//        System.out.println(getOverlapString("好妈妈","你妈妈"));
     }
 
     /**

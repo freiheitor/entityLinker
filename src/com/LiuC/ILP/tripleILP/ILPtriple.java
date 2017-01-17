@@ -60,7 +60,7 @@ public class ILPtriple {
             //add constraint
             ilpCommon.addConstraint(model,mention_overlap,menBinary,"mention overlap");
             ilpCommon.addConstraint(model,mention_contain,menBinary,"mention contain");
-            ilpCommon.addConstraint(model,object_contain,men4entBinary,"object contain");
+//            ilpCommon.addConstraint(model,object_contain,men4entBinary,"object contain");
 
 
             //optimize
