@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="entityLinker:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/entityLinker_jar</output-path>
+    <root id="archive" name="entityLinker.jar">
+      <element id="module-output" name="entityLinker" />
+      <element id="extracted-dir" path="D:/Program Files/Gurobi701/win64/lib/gurobi.jar" path-in-jar="/" />
+      <element id="file-copy" path="D:/Program Files/Gurobi701/win64/lib/gurobi.jar" />
+    </root>
+  </artifact>
+</component>

@@ -43,6 +43,38 @@ public class FileUtil {
 	}
 
 	/**
+	 * read file, and return an ArrayList which contains all lines.
+	 * @param file
+	 * @param lines
+	 */
+	public static void readLines(String file, Set<String> lines) {
+		BufferedReader reader = null;
+
+		try {
+
+			reader = new BufferedReader(new FileReader(new File(file)));
+
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				lines.add(line);
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	/**
 	 * write hashMap
 	 * @param file
 	 * @param hashMap
@@ -60,6 +92,25 @@ public class FileUtil {
 				writer.write(m.getKey() + "\t" + m.getValue() + "\n");
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	public static void writeLines(String file, String str) {
+		BufferedWriter writer = null;
+		try {
+			writer = new BufferedWriter(new OutputStreamWriter(
+					new FileOutputStream(file), "UTF-8"));//(wikiDicOut, true),add text in the end
+			writer.write(str+"\n");
+		}catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			if (writer != null) {
@@ -105,7 +156,7 @@ public class FileUtil {
 	 * @param file
 	 * @param hashMapList: value is a list
      */
-	public static void writeLinesApped(String file, HashMap<String, ArrayList<String>> hashMapList) {
+	public static void writeLinesAppend(String file, HashMap<String, ArrayList<String>> hashMapList) {
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter(new OutputStreamWriter(
@@ -162,12 +213,41 @@ public class FileUtil {
 
 	}
 
+	public static void writeLinesAppend(String file, ArrayList<?> counts) {
+		BufferedWriter writer = null;
+
+		try {
+
+			//writer = new BufferedWriter(new FileWriter(new File(file)));
+			writer = new BufferedWriter(new OutputStreamWriter(
+					new FileOutputStream(file,true),"UTF-8"));//(wikiDicOut, true),add text in the end
+
+			for (int i = 0; i < counts.size(); i++) {
+				writer.write(counts.get(i) + "\n");
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+	}
+
     /**
      * WriteFile by appeding
      * @param fileName
      * @param counts
      */
-    public static void wriLinesApped(String fileName, ArrayList<?> counts) {
+    public static void wriLinesAppend(String fileName, ArrayList<?> counts) {
         BufferedWriter writer = null;
         try {
             writer = new BufferedWriter(new OutputStreamWriter(

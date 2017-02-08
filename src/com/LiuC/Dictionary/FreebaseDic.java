@@ -20,7 +20,7 @@ public class FreebaseDic {
             calMen4ent(lines,men4ent);
         }
         System.out.println("mention size: "+men4ent.size());
-        fileUtil.writeLinesApped(freebaseOut,men4ent);
+        fileUtil.writeLinesAppend(freebaseOut,men4ent);
 
     }
 

@@ -35,9 +35,10 @@ public class CalTripILPdata {
         if(!type.equalsIgnoreCase("c")&&!type.equalsIgnoreCase("n")){
             System.out.println("input error, exit!");
         }
-//        ////windows
-//        CalTripILPdata calTripILPdata=new CalTripILPdata();
-//        calTripILPdata.tripleILPdata(fileInList,qaFile,outFile,type);
+        CalTripILPdata calTripILPdata=new CalTripILPdata();
+
+        ////windows
+        calTripILPdata.tripleILPdata(fileInList,qaFile,outFile,type);
 
 
 
@@ -102,7 +103,6 @@ public class CalTripILPdata {
         // linux input by program
         tripleFold="/data/liuc/entityLinker/data/triple_final/";
         String[] qa_files = {"cqa_triple_original_all","cqa_triple_baiduzhidao_all","cqa_triple_original_baiduzhidao_all"};
-        // 6 triples
         String []tripleFileAppend2 ={"triple_original_noCon","triple_5","triple_original_5"};//,"triple_bookValueNormalized_noId","triple_hudongValueNormalized_noId","triple_movieValueNormalized_noId","triple_musicValueNormalized_noId","triple_noCon_all"};//};//
         //outFile="/data/liuc/entityLinker/data/triple_final/cqa_result_baiduzhidao_all_noCombine_noObjectConflict_menObjOverOne_subNotEqualObj_noTripleRepeat_baiduTriples_";
 
@@ -113,8 +113,8 @@ public class CalTripILPdata {
                 System.out.println("triple file start :"+each_tripleFileAppend2);
                 fileInList=new ArrayList<>();
                 fileInList.add(tripleFold+each_tripleFileAppend2);
-                outFile = tripleFold+"result_"+each_qa_file+"_"+each_tripleFileAppend2+"_no_combine_no_objectConflict_menOverOne_subNotEqualObj_originalTriples_";
-                CalTripILPdata calTripILPdata=new CalTripILPdata();
+                outFile = tripleFold+"result_"+each_qa_file+"_"+each_tripleFileAppend2+"_noCombine_noObjectConflict_menObjOverOne_subNotEqualObj_noTripleRepeat_";
+                calTripILPdata=new CalTripILPdata();
                 calTripILPdata.tripleILPdata(fileInList,tripleFold+each_qa_file,outFile,type);
                 System.out.println("qa file end :"+each_qa_file);
                 System.out.println("triple file end :"+each_tripleFileAppend2);
@@ -204,14 +204,7 @@ public class CalTripILPdata {
                     String ans_origin=ansList.get(i);
                     ArrayList<Integer> tripleResult=new ArrayList<>();
                     String answer_triple=calTripILPdata.ILPmodel(ques,ans_origin,mention4tripID,triples,tripleResult);
-                    if (no_repeat_triplt.contains(answer_triple)){
-                        continue;
-                    }
-                    else{
-                        no_repeat_triplt.add(answer_triple);
-                    }
-
-                        statisNum.put(questionTotalNum,statisNum.get(questionTotalNum)+1);
+                    statisNum.put(questionTotalNum,statisNum.get(questionTotalNum)+1);
                     if (!answer_triple.equals("")&&answer_triple!=null){
                         calTripILPdata.ansTripleNum(tripleResult,statisNum,ansOneTriple,ansOneMoreTriples);
 
@@ -329,7 +322,8 @@ public class CalTripILPdata {
                     for(int k=0;k<tripleIDlist.size();k++){
                         int tripleID=tripleIDlist.get(k);
                             Triple triple=allTriples.get(tripleID);
-                            if(answer.contains(triple.getObject())){
+                            ArrayList<Triple> triplesList = ilpTripStru.getTriples();
+                            if(answer.contains(triple.getObject())&&!triplesList.contains(allTriples.get(tripleID))){  //answer contains object of triple and no repeat triple occurring
                                 ilpTripStru.addMen4entID(tripleID);
                                 ilpTripStru.addTriples(allTriples.get(tripleID));
                                 menEntSize++;

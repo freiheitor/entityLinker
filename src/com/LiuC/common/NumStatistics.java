@@ -9,16 +9,105 @@ import java.util.Map;
  */
 public class NumStatistics {
     public static void main(String[] args) {
-        double [] testData=new double[]{1,2,3,4,5,6,7,8,9};
-        System.out.println("最大值："+getMax(testData));
-        System.out.println("最小值："+getMin(testData));
-        System.out.println("计数："+getCount(testData));
-        System.out.println("求和："+getSum(testData));
-        System.out.println("求平均："+getAverage(testData));
-        System.out.println("方差："+getVariance(testData));
-        System.out.println("标准差："+getStandardDiviation(testData));
+//        double [] testData=new double[]{1,2,3,4,5,6,7,8,9};
+//        System.out.println("最大值："+getMax(testData));
+//        System.out.println("最小值："+getMin(testData));
+//        System.out.println("计数："+getCount(testData));
+//        System.out.println("求和："+getSum(testData));
+//        System.out.println("求平均："+getAverage(testData));
+//        System.out.println("方差："+getVariance(testData));
+//        System.out.println("标准差："+getStandardDiviation(testData));
+
+//        String tripleFile="E:\\project\\entityLinking\\data\\triple\\triple_all.all";
+        String qaFile="E:\\project\\entityLinking\\data\\triple\\cqa_triple_all.all";
+
+        FileUtil fileUtil = new FileUtil();
+        NumStatistics numStatistics=new NumStatistics();
+        ArrayList<String> linesList = new ArrayList<>();
+        fileUtil.readLines(qaFile,linesList);
+        System.out.println("statistic quesiton:");
+        int index=0;
+        ArrayList<Double> result=new ArrayList<>();
+        numStatistics.num_statistic(linesList,index,result);
+
+        System.out.println("statistic answer:");
+        index=1;
+        result=new ArrayList<>();
+        numStatistics.num_statistic(linesList,index,result);
 
     }
+
+    public static void num_statistic(ArrayList<String> linesList ,int index, ArrayList<Double> result){
+        NumStatistics numStatistics=new NumStatistics();
+        String [] questions=numStatistics.listToStringArray(linesList,index);
+        double [] quesLengths=numStatistics.strTodoubleArray(questions);
+        numStatistics.getLengthResult(quesLengths,result);
+    }
+
+    /**
+     * from list<String> to split the index String
+     * @param linesList
+     * @param index
+     * @return
+     */
+    public static String[] listToStringArray(ArrayList<String> linesList,int index){
+        String[] returnArray = new String[linesList.size()];
+        for(int i=0;i<linesList.size();i++){
+            String [] strArray=linesList.get(i).split("\t");
+            try {
+                returnArray[i]=strArray[index];
+            }catch (IndexOutOfBoundsException e){
+                e.printStackTrace();
+                returnArray[i]="";
+                continue;
+            }
+        }
+        return returnArray;
+    }
+
+    /**
+     * string array to its length array
+     * @param strArray
+     * @return
+     */
+    public static double[] strTodoubleArray(String[] strArray){
+        double[] doubleAaary = new double[strArray.length];
+        for (int i=0;i<strArray.length;i++){
+            doubleAaary[i]=(double)strArray[i].length();
+        }
+        return doubleAaary;
+    }
+
+    /**
+     * statistic all length of array
+     */
+    public static void getLengthResult(double [] doubleAaary, ArrayList<Double> statMenLengthResult){
+
+        NumStatistics numStatistics=new NumStatistics();
+        statMenLengthResult=new ArrayList<>();
+        double max=numStatistics.getMax(doubleAaary);
+        double min=numStatistics.getMin(doubleAaary);
+        double count=(double)numStatistics.getCount(doubleAaary);
+        double sum=numStatistics.getSum(doubleAaary);
+        double average=numStatistics.getAverage(doubleAaary);
+        double variance=numStatistics.getVariance(doubleAaary);
+        double standDeviation=numStatistics.getStandardDiviation(doubleAaary);
+        System.out.println("max："+max);
+        System.out.println("min："+min);
+        System.out.println("count："+count);
+        System.out.println("sum："+sum);
+        System.out.println("average："+average);
+        System.out.println("variance："+variance);
+        System.out.println("standard deviation："+standDeviation);
+        statMenLengthResult.add(max);
+        statMenLengthResult.add(min);
+        statMenLengthResult.add(count);
+        statMenLengthResult.add(sum);
+        statMenLengthResult.add(average);
+        statMenLengthResult.add(variance);
+        statMenLengthResult.add(standDeviation);
+    }
+
     /**
      * 求给定双精度数组中值的最大值
      *
@@ -205,3 +294,5 @@ public class NumStatistics {
         return menLengths;
     }
 }
+
+
